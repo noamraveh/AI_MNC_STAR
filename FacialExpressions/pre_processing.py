@@ -36,8 +36,8 @@ class PreProcess:
         self.dataset_name = dataset_name
         self.df = pd.read_csv(dataset_name + ".csv")
         if dataset_name == "FER2013":
-            self.one_hot_dict = {0: "Angry", 1: "Disgust", 2: "Fear", 3: "Happy", 4: "Sad", 5: "Surprise",
-                                 6: "Neutral"}
+            self.one_hot_dict = {0: "angry", 1: "disgust", 2: "fear", 3: "happy", 4: "sad", 5: "surprise",
+                                 6: "neutral"}
         if dataset_name == "CK+":
             self.one_hot_dict = {0: "neutral", 1: "anger", 2: "contempt", 3: "disgust", 4: "fear", 5: "happy",
                                  6: "sad", 7: "surprise"}
