@@ -153,7 +153,7 @@ class Gan:
         _, acc_artificial = self.decoder.evaluate(X_artificial, y_artificial, verbose=0)
         print('Accuracy: on real: %.0f%%, on artificial: %.0f%%' % (acc_real * 100, acc_artificial * 100))
         save_plot(X_artificial, epoch_num)
-        filename = 'generator_model_%03d.h5' % (epoch_num + 1)
+        filename = 'generator_%03d.h5' % (epoch_num + 1)
         self.encoder.save(filename)
 
     def create_images(self, h5_file, n):
@@ -197,11 +197,11 @@ def main_3():
     latent_dim = 100
     gan = Gan(images, latent_dim)
     gan.create_gan()
-    gan.train_gan()
+    #gan.train_gan()
 
 
-    #generating new images based on trained model weights
-    #gan.create_images("generator_model_250.h5", 7)
+    # generating new images based on trained model weights
+    gan.create_images("generator_250.h5", 7)
 
 
 if __name__ == '__main__':
