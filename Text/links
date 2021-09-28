@@ -1,5 +1,20 @@
 link for the labeled sentences from kaggle  ---  https://www.kaggle.com/ishantjuyal/emotions-in-text?select=Emotion_final.csv
 
-link for the labled twitter sentences from data.world --- https://data.world/crowdflower/sentiment-analysis-in-text
+link for the labled twitter sentences from data.world --- https://data.world/crowdflower/sentiment-analysis-in-text 
+another link to the labeled twitter sentences: https://www.kaggle.com/pashupatigupta/emotion-detection-from-text
 
 link for the dictionary of emotions - https://www.kaggle.com/iwilldoit/emotions-sensor-data-set/code
+
+link to dataset of labeled sentences: https://www.kaggle.com/praveengovi/classify-emotions-in-text-with-bert/data
+
+link to an API which for a sentence returns the emotions it senses - https://www.kaggle.com/getting-started/196520    (https://pypi.org/project/NRCLex/)
+
+link to whatsapp statuses and theirs emotions (happy,angry,sad) - https://www.kaggle.com/sankha1998/emotion?select=Emotion%28sad%29.csv
+
+link to another dataset of 40k labeled sentences - https://www.kaggle.com/icw123/emotion
+
+https://www.kaggle.com/anjaneyatripathi/emotion-classification-nlp
+
+link to reddit comments and theirs emotions  - https://www.kaggle.com/debarshichanda/goemotions
+
+https://www.kaggle.com/subhajournal/tweet-sentiment-and-emotion-analysis
