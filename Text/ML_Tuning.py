@@ -42,6 +42,8 @@ class Tune:
             return 'Linear SVM', 'Alpha'
         elif my_class == 'LogisticRegression':
             return 'LogisticRegression', 'C'
+        elif my_class == 'AdaBoostClassifier':
+            return 'AdaBoostClassifier', ''
 
     def plot_graph(self, train_acc, val_acc):
         classifier, xlabel = self.get_graph_labels()
@@ -65,11 +67,11 @@ class Tune:
     @staticmethod
     def plot_4d_graph(df):
         pre_extract = df["base_estimator"].tolist()
-        extracted = []
-        for sample in pre_extract:
-            digit = [c for c in sample if c.isdigit()]
-            if len(digit):
-                extracted.append(int(digit[0]))
+        extracted = [x.max_depth for x in pre_extract]
+        # for sample in pre_extract:
+        #     digit = [c for c in sample if c.isdigit()]
+        #     if len(digit):
+        #         extracted.append(int(digit[0]))
         df["base_estimator"] = np.array(extracted)
         for datatype_ in ["Train", "Validation"]:
             fig = plt.figure()

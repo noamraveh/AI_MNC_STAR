@@ -24,6 +24,7 @@ from sklearn.utils import shuffle
 from sklearn.calibration import CalibratedClassifierCV
 from Voting_Classifier import EnsembleClassifier
 
+
 def preprocessing_data():
     bert = pd.read_csv('bert.csv')
     isear = pd.read_csv('isear.csv')
@@ -84,6 +85,7 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
     print("CV Naive Bayes")
     NB_model = Tune(NB_clf, NB_hyperparams_dict, X_train_ML, y_train_ML)
     NB_best_model_params = NB_model.tune()
+    NB_model.save_model()
 
     print("starts to tune Linear SVM")
     # Linear SVM (SGDclassifier)  # when the loss is "hinge" the SGD is LinearSVM
@@ -92,6 +94,8 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
     print("CV SVM")
     SVM_model = Tune(SVM_clf, SVM_hyperparams_dict, X_train_ML, y_train_ML)
     SVM_best_model_params = SVM_model.tune()
+    SVM_model.save_model()
+
     print("starts to tune Linear Regression")
     # linear regression
     LR = LogisticRegression(max_iter=5000, class_weight='balanced')
@@ -99,6 +103,7 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
     print("CV LR")
     LR_model = Tune(LR, LR_hyperparams_dict, X_train_ML, y_train_ML)
     LR_best_model_params = LR_model.tune()
+    LR_model.save_model()
 
     print("starts to tune Adaboost")
     # Adaboost
@@ -109,6 +114,7 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
     print("CV Adaboost")
     Adaboost_model = Tune(AdaBoost, AdaBoost_hyperparams_dict, X_train_Adaboost, y_train_Adaboost)
     Adaboost_best_model_params = Adaboost_model.tune()
+    Adaboost_model.save_model()
 
     best_models = {'NB': NB_model.best_model, 'SVM': SVM_model.best_model, 'LR': LR_model.best_model, "AdaBoost": Adaboost_model.best_model}
     best_parameters = {'NB': NB_best_model_params, 'SVM': SVM_best_model_params, 'LR': LR_best_model_params, 'AdaBoost': Adaboost_best_model_params}
@@ -120,10 +126,12 @@ def tune_deep_learning_models(vocab_size, max_length, X_train, y_train):
     print("starts to tune LSTM")
     LSTM = LSTM_model(vocab_size, 100, max_length)
     LSTM.tune(X_train, y_train)
+    LSTM.save_model()
 
     print("starts to tune CNN")
     CNN = CNN_model(vocab_size, 100, max_length)
     CNN.tune(X_train, y_train)
+    CNN.save_model()
 
     best_models = {'LSTM': LSTM.best_model, 'CNN': CNN.best_model}
     best_parameters = {'LSTM': LSTM.best_params, 'CNN': CNN.best_params}
@@ -194,7 +202,7 @@ def main():
     # added_features_df = data['added_features_df']
     # clean_text = data['clean_text']
 
-    # todo: if data already exists, comment out the lines above and use the 4 below:
+    # # todo: if data already exists, comment out the lines above and use the 4 below:
     y = pd.read_csv("y.csv").values.ravel()
     added_features_df = pd.read_csv("added_features.csv")
     clean_text = pd.read_csv("clean_text.csv")
@@ -217,16 +225,16 @@ def main():
     max_length, X_DL = tokenizer_modifications(clean_text, vocab_size)
     y_DL = LabelBinarizer().fit_transform(y)
     X_train_DL, X_test_DL, y_train_DL, y_test_DL = train_test_split(X_DL, y_DL, test_size=0.2, random_state=11, shuffle=True)
-    np.savetxt("X_test_DL", X_test_ML, delimiter=',')
+    np.savetxt("X_test_DL", X_test_DL, delimiter=',')
     np.savetxt("y_test_DL", y_test_DL, delimiter=',')
 
     best_DL_models, DL_models_params, DL_accuracies = tune_deep_learning_models(vocab_size, max_length, X_train_DL, y_train_DL)
 
-    voting_clf = EnsembleClassifier(ML_models_params, ML_accuracies, DL_models_params, DL_accuracies)
+    voting_clf = EnsembleClassifier(ML_models_params, ML_accuracies, DL_models_params, DL_accuracies, vocab_size, 100, max_length)
 
     voting_clf.fit(X_train_ML, X_train_AdaBoost, X_train_DL, y_train_ML)
     y_pred = voting_clf.predict_proba(X_test_ML, X_test_AdaBoost, X_test_DL)
-    acc = sum(1 for pred,actual in zip(y_pred, y_test_ML) if pred.index(max(pred)) == actual) / len(y_test_ML)
+    acc = sum(1 for pred,actual in zip(y_pred, y_test_ML) if np.argmax(pred) == actual) / len(y_test_ML)
 
     print(f"Voting CLF ACC: {acc} ")
 

@@ -6,25 +6,32 @@ from sklearn.calibration import CalibratedClassifierCV
 import tensorflow as tf
 from DL_Tuning import LSTM_model, CNN_model
 import numpy as np
+import pandas as pd
 
 
 def set_weights(ML_acc, DL_acc):
-    accuracies = ML_acc.values() + DL_acc.values()
+    accuracies = list(ML_acc.values())
+    accuracies.extend(list(DL_acc.values()))
+    # accuracies = list(ML_acc.values()) + list(DL_acc.values())
     total_score = sum(accuracies)
-    weights = [weight / total_score for weight in accuracies.values()]
+    weights = [weight / total_score for weight in accuracies]
+    with open("voting_classifier_weights.txt", 'a') as myfile:
+        myfile.write(', '.join(str(item) for item in weights) + '\n')
     return weights
 
 
 class EnsembleClassifier():
-    def __init__(self, ML_models_params, ML_models_acc, DL_models_params, DL_models_acc):
+    def __init__(self, ML_models_params, ML_models_acc, DL_models_params, DL_models_acc, vocab_size, vector_size, input_length):
         self.ComplementNB = ComplementNB(**ML_models_params['NB'])
         self.LinearSVM = CalibratedClassifierCV(
-            base_estimator=SGDClassifier(**ML_models_params['SVM'], class_weight='balanced'), cv='prefit')
+            base_estimator=SGDClassifier(**ML_models_params['SVM'], class_weight='balanced'))
         self.LogisticRegression = LogisticRegression(**ML_models_params["LR"])
         self.AdaBoost = AdaBoostClassifier(**ML_models_params["AdaBoost"])
-        self.LSTM = tf.keras.wrappers.scikit_learn.KerasClassifier(LSTM_model.build_network(**DL_models_params['LSTM']))
+        LSTM = LSTM_model(vocab_size, vector_size, input_length)
+        self.LSTM = tf.keras.wrappers.scikit_learn.KerasClassifier(LSTM.build_network, **DL_models_params['LSTM'])
         self.LSTM._estimator_type = "classifier"
-        self.CNN = tf.keras.wrappers.scikit_learn.KerasClassifier(CNN_model.build_network(**DL_models_params['CNN']))
+        CNN = CNN_model(vocab_size, vector_size, input_length)
+        self.CNN = tf.keras.wrappers.scikit_learn.KerasClassifier(CNN.build_network, **DL_models_params['CNN'])
         self.CNN._estimator_type = "classifier"
         self.classifiers = [self.ComplementNB, self.LinearSVM, self.LogisticRegression, self.AdaBoost, self.LSTM,
                             self.CNN]
