@@ -20,17 +20,18 @@ class Tune:
         check_clf.fit(self.X_train, self.y_train)
         train_acc = check_clf.cv_results_["mean_train_score"]
         val_acc = check_clf.cv_results_["mean_test_score"]
-        self.plot_graph(train_acc, val_acc)
-        if self.clf.__class__.__name__ == 'AdaBoost':
+        print(f"Best hyperparams are: {check_clf.best_params_}"
+              f"Best Accuracy is: {check_clf.best_score_}")
+        if self.clf.__class__.__name__ == 'AdaBoostClassifier':
             table = pd.concat([pd.DataFrame(check_clf.cv_results_["params"]),
                                pd.DataFrame(train_acc, columns=["Train Accuracy"]),
                                pd.DataFrame(val_acc, columns=["Validation Accuracy"])], axis=1)
-            print(tabulate(table, headers='keys', tablefmt='psql'))
-
+            table.to_csv("AdaBoost_tuning_results.csv", index=False)
+            self.plot_4d_graph(table)
+        else:
+            self.plot_graph(train_acc, val_acc)
         self.val_acc = check_clf.best_score_
-        print(f"Best hyperparams are: {check_clf.best_params_}"
-              f"Best Accuracy is: {check_clf.best_score_}")
-        self.best_model = check_clf.best_estimator_.model
+        self.best_model = check_clf.best_estimator_
         return check_clf.best_params_
 
     def get_graph_labels(self):
@@ -41,14 +42,9 @@ class Tune:
             return 'Linear SVM', 'Alpha'
         elif my_class == 'LogisticRegression':
             return 'LogisticRegression', 'C'
-        elif my_class == 'AdaBoost':
-            return 'AdaBoost', ""
 
     def plot_graph(self, train_acc, val_acc):
         classifier, xlabel = self.get_graph_labels()
-        if classifier == "AdaBoost":
-            self.plot_4d_graph(train_acc, "Train")
-            self.plot_4d_graph(val_acc, "Validation")
         params = []
         for key, value in self.hyperparams_dict.items():
             params.append(value)
@@ -62,23 +58,31 @@ class Tune:
         plt.legend()
         plt.show()
 
-    def plot_4d_graph(self, acc, datatype):
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        x_depth = np.array([3, 5, 7, 9])
-        y_num_estimators = np.array(self.hyperparams_dict["num estimators"])
-        z_lr = np.array(self.hyperparams_dict["learning rate"])
-        c = acc
-        ax.set_xlabel('Num Estimators')
-        ax.set_ylabel('Learning Rate')
-        ax.set_zlabel(f'{datatype} Accuracy')
-
-        ax.set_title(f'AdaBoost {datatype} Accuracy')
-        img = ax.scatter(x_depth, y_num_estimators, z_lr, c=c, cmap=plt.hot())
-        fig.colorbar(img)
-        # plt.show()
-        plt.savefig(f"AdaBoost_{datatype}_acc.png")
-
     def save_model(self):
         filename = self.get_graph_labels()[0]
         dump(self.clf, f'{filename}.joblib')
+
+    @staticmethod
+    def plot_4d_graph(df):
+        pre_extract = df["base_estimator"].tolist()
+        extracted = []
+        for sample in pre_extract:
+            digit = [c for c in sample if c.isdigit()]
+            if len(digit):
+                extracted.append(int(digit[0]))
+        df["base_estimator"] = np.array(extracted)
+        for datatype_ in ["Train", "Validation"]:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            x_depth = df['base_estimator'].to_numpy()
+            y_num_estimators = df["n_estimators"].to_numpy()
+            z_lr = df["learning_rate"].to_numpy()
+            c = df[f'{datatype_} Accuracy'].to_numpy()
+            ax.set_xlabel('Max Depth')
+            ax.set_ylabel('Num Estimators')
+            ax.set_zlabel('Learning Rate')
+
+            ax.set_title(f'AdaBoost {datatype_} Accuracy')
+            img = ax.scatter(x_depth, y_num_estimators, z_lr, c=c, cmap='Wistia')
+            fig.colorbar(img, pad=0.1, aspect=30)
+            plt.savefig(f'AdaBoost_{datatype_}_Accuracy.png')

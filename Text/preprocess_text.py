@@ -78,11 +78,10 @@ class PreProcess:
             [self.added_features.drop(['Emotions_list'], axis=1), self.added_features['Emotions_list'].apply(pd.Series)], axis=1)
 
     def Tfidf(self):
-        vectorizer = TfidfVectorizer(max_features=10000)
+        vectorizer = TfidfVectorizer()
         self.X = vectorizer.fit_transform(self.all_data['clean text'])
         self.y = self.all_data["Emotion"]
         self.y.reset_index(drop=True, inplace=True)
-        self.vocabulary = vectorizer.vocabulary_.keys()
 
     def data_visualisation(self):
         words = ''
@@ -101,6 +100,6 @@ class PreProcess:
         self.all_data.to_csv('text_dataset.csv', index=False)
         sparse.save_npz("X.npz", self.X)
         self.y.to_csv("y.csv", index=False)
+        self.added_features.to_csv('added_features.csv', index=False)
         self.clean_text_df.to_csv("clean_text.csv", index=False)
-        with open("vocabulary.txt", "w") as fp:
-            fp.writelines(word + "\n" for word in self.vocabulary)
+
