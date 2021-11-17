@@ -81,7 +81,7 @@ def tokenizer_modifications(df, num_words):
 def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_train_Adaboost):
     print("starts to tune Naive Bayes")
     NB_clf = ComplementNB()
-    NB_hyperparams_dict = {'alpha': np.linspace(1, 10, num=50)} # todo: after setting the logspace, check linspace for better scaling
+    NB_hyperparams_dict = {'alpha': np.linspace(0.01, 2, num=50)} # todo: after setting the logspace, check linspace for better scaling
     print("CV Naive Bayes")
     NB_model = Tune(NB_clf, NB_hyperparams_dict, X_train_ML, y_train_ML)
     NB_best_model_params = NB_model.tune()
@@ -90,7 +90,7 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
     print("starts to tune Linear SVM")
     # Linear SVM (SGDclassifier)  # when the loss is "hinge" the SGD is LinearSVM
     SVM_clf = SGDClassifier(class_weight='balanced')
-    SVM_hyperparams_dict = {'alpha': np.logspace(-6, -4, num=100)} # todo: after setting the logspace, check linspace for better scaling
+    SVM_hyperparams_dict = {'alpha': np.logspace(-4, -3, num=50)} # todo: after setting the logspace, check linspace for better scaling
     print("CV SVM")
     SVM_model = Tune(SVM_clf, SVM_hyperparams_dict, X_train_ML, y_train_ML)
     SVM_best_model_params = SVM_model.tune()
