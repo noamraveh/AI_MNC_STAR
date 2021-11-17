@@ -16,7 +16,7 @@ class Tune:
         self.best_model = None
 
     def tune(self):
-        check_clf = GridSearchCV(estimator=self.clf, param_grid=self.hyperparams_dict, verbose=True, return_train_score=True)
+        check_clf = GridSearchCV(estimator=self.clf, param_grid=self.hyperparams_dict, scoring='balanced_accuracy', verbose=True, return_train_score=True)
         check_clf.fit(self.X_train, self.y_train)
         train_acc = check_clf.cv_results_["mean_train_score"]
         val_acc = check_clf.cv_results_["mean_test_score"]
