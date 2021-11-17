@@ -58,6 +58,7 @@ class Tune:
         plt.plot(params, val_acc, label='Validation')
         plt.plot(params, train_acc, label='Training')
         plt.legend()
+        plt.savefig(f"{classifier}_Accuracy.png")
         plt.show()
 
     def save_model(self):
