@@ -46,7 +46,7 @@ def plot_3d_graph(acc, datatype, params):
     ax.set_zlabel(f'{datatype} Accuracy')
     ax.set_title(f'CNN {datatype} Accuracy')
     # plt.show()
-    plt.savefig(f"CNN_{datatype}_acc.png")
+    plt.savefig(f"CNN_{datatype}_Accuracy.png")
 
 
 class TuneNetwork:
@@ -84,7 +84,7 @@ class TuneNetwork:
         epochs = 10
         callback = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=3)
         model = KerasClassifier(build_fn=self.build_network)
-        check_model = GridSearchCV(estimator=model, param_grid=self.params, cv=5, verbose=1, return_train_score=True)
+        check_model = GridSearchCV(estimator=model, param_grid=self.params, cv=5, verbose=1, scoring='balanced_accuracy', return_train_score=True)
         check_model = check_model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, callbacks=[callback], validation_split=0.2)
         train_acc = check_model.cv_results_["mean_train_score"]
         val_acc = check_model.cv_results_["mean_test_score"]
@@ -116,7 +116,7 @@ class LSTM_model(TuneNetwork):
         plt.plot(units, val_acc, label='Validation')
         plt.legend()
         #plt.show()
-        plt.savefig("LSTM_acc.png")
+        plt.savefig("LSTM_Accuracy.png")
 
 
 class CNN_model(TuneNetwork):
