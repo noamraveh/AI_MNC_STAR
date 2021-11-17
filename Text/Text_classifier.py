@@ -96,7 +96,7 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
     SVM_best_model_params = SVM_model.tune()
     SVM_model.save_model()
 
-    print("starts to tune Linear Regression")
+    print("starts to tune Logistic Regression")
     # linear regression
     LR = LogisticRegression(max_iter=5000, class_weight='balanced')
     LR_hyperparams_dict = {'C': np.linspace(0.1, 5, num=50)} # todo: after setting the logspace, check linspace for better scaling
