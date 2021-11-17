@@ -7,6 +7,7 @@ import tensorflow as tf
 from DL_Tuning import LSTM_model, CNN_model
 import numpy as np
 import pandas as pd
+from joblib import dump
 
 
 def set_weights(ML_acc, DL_acc):
@@ -15,7 +16,7 @@ def set_weights(ML_acc, DL_acc):
     # accuracies = list(ML_acc.values()) + list(DL_acc.values())
     total_score = sum(accuracies)
     weights = [weight / total_score for weight in accuracies]
-    with open("voting_classifier_weights.txt", 'a') as myfile:
+    with open("voting_classifier_weights.txt", 'w') as myfile:
         myfile.write(', '.join(str(item) for item in weights) + '\n')
     return weights
 
@@ -50,8 +51,14 @@ class EnsembleClassifier():
         self.predictions_ = []
         for classifier in self.ML_classifiers:
             self.predictions_.append(classifier.predict_proba(X_ML_val))
+            dump(classifier, f'{classifier.__class__.__name__}.joblib')
         self.predictions_.append(self.AdaBoost.predict_proba(X_Ada_val))
-        for classifier in self.DL_classifiers:
-            self.predictions_.append(classifier.predict_proba(X_DL_val))
+        dump(self.AdaBoost, f'{self.AdaBoost.__class__.__name__}.joblib')
+        self.predictions_.append(self.LSTM.predict_proba(X_DL_val))
+        self.LSTM.model.save('LSTM_model.h5')
+        self.predictions_.append(self.CNN.predict_proba(X_DL_val))
+        self.CNN.model.save('CNN_model.h5')
+        # for classifier in self.DL_classifiers:
+        #     self.predictions_.append(classifier.predict_proba(X_DL_val))
 
         return np.average(self.predictions_, axis=0, weights=self.weights)

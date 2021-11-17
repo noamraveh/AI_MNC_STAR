@@ -30,6 +30,7 @@ def preprocessing_data():
     isear = pd.read_csv('isear.csv')
     tweets = pd.read_csv('tweets.csv', usecols=['Text', 'Emotion'], names=['Tweet', 'Emotion', 'Text']).drop([0])
     all_data = pd.concat([tweets, bert, isear])
+    #all_data = pd.read_csv('data_to_test.csv')
     all_data = shuffle(all_data, random_state=42)
 
     # convert emotions
@@ -85,7 +86,7 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
     print("CV Naive Bayes")
     NB_model = Tune(NB_clf, NB_hyperparams_dict, X_train_ML, y_train_ML)
     NB_best_model_params = NB_model.tune()
-    NB_model.save_model()
+    #NB_model.save_model()
 
     print("starts to tune Linear SVM")
     # Linear SVM (SGDclassifier)  # when the loss is "hinge" the SGD is LinearSVM
@@ -94,7 +95,7 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
     print("CV SVM")
     SVM_model = Tune(SVM_clf, SVM_hyperparams_dict, X_train_ML, y_train_ML)
     SVM_best_model_params = SVM_model.tune()
-    SVM_model.save_model()
+    #SVM_model.save_model()
 
     print("starts to tune Linear Regression")
     # linear regression
@@ -103,7 +104,7 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
     print("CV LR")
     LR_model = Tune(LR, LR_hyperparams_dict, X_train_ML, y_train_ML)
     LR_best_model_params = LR_model.tune()
-    LR_model.save_model()
+    #LR_model.save_model()
 
     print("starts to tune Adaboost")
     # Adaboost
@@ -114,7 +115,7 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
     print("CV Adaboost")
     Adaboost_model = Tune(AdaBoost, AdaBoost_hyperparams_dict, X_train_Adaboost, y_train_Adaboost)
     Adaboost_best_model_params = Adaboost_model.tune()
-    Adaboost_model.save_model()
+    #Adaboost_model.save_model()
 
     best_models = {'NB': NB_model.best_model, 'SVM': SVM_model.best_model, 'LR': LR_model.best_model, "AdaBoost": Adaboost_model.best_model}
     best_parameters = {'NB': NB_best_model_params, 'SVM': SVM_best_model_params, 'LR': LR_best_model_params, 'AdaBoost': Adaboost_best_model_params}
@@ -126,12 +127,12 @@ def tune_deep_learning_models(vocab_size, max_length, X_train, y_train):
     print("starts to tune LSTM")
     LSTM = LSTM_model(vocab_size, 100, max_length)
     LSTM.tune(X_train, y_train)
-    LSTM.save_model()
+    #LSTM.save_model()
 
     print("starts to tune CNN")
     CNN = CNN_model(vocab_size, 100, max_length)
     CNN.tune(X_train, y_train)
-    CNN.save_model()
+    #CNN.save_model()
 
     best_models = {'LSTM': LSTM.best_model, 'CNN': CNN.best_model}
     best_parameters = {'LSTM': LSTM.best_params, 'CNN': CNN.best_params}
