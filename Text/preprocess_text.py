@@ -9,18 +9,17 @@ import string
 from sklearn.feature_extraction.text import TfidfVectorizer
 from scipy import sparse
 
+
 class PreProcess:
     def __init__(self, data):
         self.all_data = data
         self.NRC_lex = pd.read_csv('NRC_Emotion_Lexicon.csv')[
             ['English (en)', 'Anger', 'Disgust', 'Fear', 'Joy', 'Sadness', 'Surprise']]
         self.NRC_lex = self.NRC_lex.rename(columns={'Joy': 'Happy', 'Sadness': 'Sad', 'Anger': 'Angry'})
-        self.vocabulary = None
         self.X = None
         self.y = None
         self.clean_text_df = None
         self.added_features = pd.DataFrame()
-
 
     @staticmethod
     def avg_word(sentence):
@@ -77,11 +76,12 @@ class PreProcess:
         self.added_features = pd.concat(
             [self.added_features.drop(['Emotions_list'], axis=1), self.added_features['Emotions_list'].apply(pd.Series)], axis=1)
 
-    def Tfidf(self):
+    def Tfidf(self, is_train=True):
         vectorizer = TfidfVectorizer()
         self.X = vectorizer.fit_transform(self.all_data['clean text'])
-        self.y = self.all_data["Emotion"]
-        self.y.reset_index(drop=True, inplace=True)
+        if is_train:
+            self.y = self.all_data["Emotion"]
+            self.y.reset_index(drop=True, inplace=True)
 
     def data_visualisation(self):
         words = ''

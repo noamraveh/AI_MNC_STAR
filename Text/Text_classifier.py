@@ -23,6 +23,12 @@ from sklearn.metrics import balanced_accuracy_score
 from sklearn.utils import shuffle
 from sklearn.calibration import CalibratedClassifierCV
 from Voting_Classifier import EnsembleClassifier
+import pickle
+
+
+def save_tokenizer_to_file(tokenizer):
+    with open('tokenizer.pickle', 'wb') as handle:
+        pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def preprocessing_data():
@@ -73,6 +79,7 @@ def tokenizer_modifications(df, num_words):
     text = df.values.tolist()
     tokenizer = Tokenizer(num_words=num_words)
     tokenizer.fit_on_texts(text)
+    save_tokenizer_to_file(tokenizer)
     encoded_text = tokenizer.texts_to_sequences(text)
     max_length = max([len(s.split()) for s in text])
     data = pad_sequences(encoded_text, maxlen=max_length, padding='pre')
