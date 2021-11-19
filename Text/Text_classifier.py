@@ -231,6 +231,7 @@ def main():
     # training DL models
     vocab_size = 10000
     max_length, X_DL = tokenizer_modifications(clean_text, vocab_size)
+    print(f"Max Length for DL models: {max_length}")
     y_DL = LabelBinarizer().fit_transform(y)
     X_train_DL, X_test_DL, y_train_DL, y_test_DL = train_test_split(X_DL, y_DL, test_size=0.2, random_state=11, shuffle=True)
     np.savetxt("X_test_DL", X_test_DL, delimiter=',')
@@ -241,32 +242,11 @@ def main():
     voting_clf = EnsembleClassifier(ML_models_params, ML_accuracies, DL_models_params, DL_accuracies, vocab_size, 100, max_length)
 
     voting_clf.fit(X_train_ML, X_train_AdaBoost, X_train_DL, y_train_ML)
-    y_pred = voting_clf.predict_proba(X_test_ML, X_test_AdaBoost, X_test_DL)
-    acc = sum(1 for pred,actual in zip(y_pred, y_test_ML) if np.argmax(pred) == actual) / len(y_test_ML)
+    y_pred = voting_clf.predict_proba_on_test(X_test_ML, X_test_AdaBoost, X_test_DL, y_test_ML)
+    voting_clf.create_multi_label_confusion_matrix(real_y=y_test_ML, predicted_y=y_pred)
+    voting_clf.plot_accuracies()
 
-    print(f"Voting CLF ACC: {acc} ")
-
-
-    # best_ML_model, model_name, best_ML_model_accuracy = choose_best_model(best_ML_models, ML_accuracies)
-    # best_DL_model, model_name, best_DL_model_accuracy = choose_best_model(best_DL_models, DL_accuracies)
-    #
-    # # create ML ensemble
-    # ML_voting_clf, ML_voting_clf_accuracy = build_ML_voting_classifier(ML_models_params, ML_accuracies, X_train_ML,
-    #                                                                    X_train_AdaBoost, y_train_ML)
-    #
-    # if best_ML_model_accuracy > ML_voting_clf_accuracy:
-    #     dump(best_ML_model, f'BestMLClassifier_{model_name}.joblib')
-    # else:
-    #     dump(ML_voting_clf, f'BestMLClassifier_VotingClf.joblib')
-    #
-    #
-    #
-    # # create DL ensemble
-    # DL_voting_clf, DL_voting_clf_accuracy = build_DL_voting_classifier(DL_models_params, DL_accuracies, X_train_DL, y_train_DL)
-    # if best_DL_model_accuracy > DL_voting_clf_accuracy:
-    #     best_DL_model.save(f'BestDLClassifier_{model_name}.h5')
-    # else:
-    #     dump(DL_voting_clf, f'BestDLClassifier_VotingClf.joblib')
+    print(f"Voting classifier accuracy on test set: {voting_clf.voting_clf_accuracy_on_test}")
 
 
 if __name__ == '__main__':
