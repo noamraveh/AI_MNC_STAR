@@ -105,7 +105,7 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
     print("starts to tune Logistic Regression")
     # linear regression
     LR = LogisticRegression(max_iter=5000, class_weight='balanced')
-    LR_hyperparams_dict = {'C': np.logspace(0.01, 20, num=100)} # todo: after setting the logspace, check linspace for better scaling
+    LR_hyperparams_dict = {'C': np.logspace(-1, 2, num=100)} # todo: after setting the logspace, check linspace for better scaling
     print("CV LR")
     LR_model = Tune(LR, LR_hyperparams_dict, X_train_ML, y_train_ML)
     LR_best_model_params = LR_model.tune()
