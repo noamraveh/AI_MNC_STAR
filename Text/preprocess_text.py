@@ -8,6 +8,7 @@ from nltk.stem import PorterStemmer
 import string
 from sklearn.feature_extraction.text import TfidfVectorizer
 from scipy import sparse
+import pickle
 
 
 class PreProcess:
@@ -47,6 +48,17 @@ class PreProcess:
                     is_repeated = 1
                     break
         return is_repeated
+
+    @staticmethod
+    def save_vectorizer_to_file(vectorizer):
+        with open('vectorizer.pickle', 'wb') as handle:
+            pickle.dump(vectorizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    @staticmethod
+    def load_vectorizer(filename):
+        with open(filename, 'rb') as handle:
+            vectorizer = pickle.load(handle)
+        return vectorizer
 
     def NRC_lex_scores_per_line(self, line):
         emotions_scores_dict = {"Angry": 0, "Disgust": 0, "Fear": 0, "Happy": 0, "Sad": 0, "Surprise": 0}
@@ -88,14 +100,18 @@ class PreProcess:
 
         self.added_features['Emotions_list'] = self.all_data['clean text'].apply(self.NRC_lex_scores_per_line)
         self.added_features = pd.concat(
-            [self.added_features.drop(['Emotions_list'], axis=1), self.added_features['Emotions_list'].apply(pd.Series)], axis=1)
+             [self.added_features.drop(['Emotions_list'], axis=1), self.added_features['Emotions_list'].apply(pd.Series)], axis=1)
 
     def Tfidf(self, is_train=True):
         vectorizer = TfidfVectorizer()
-        self.X = vectorizer.fit_transform(self.all_data['clean text'])
         if is_train:
+            self.X = vectorizer.fit_transform(self.all_data['clean text'])
+            self.save_vectorizer_to_file(vectorizer)
             self.y = self.all_data["Emotion"]
             self.y.reset_index(drop=True, inplace=True)
+        else:
+            vectorizer = self.load_vectorizer('vectorizer.pickle')
+            self.X = vectorizer.transform(self.all_data['clean text'])
 
     def data_visualisation(self):
         words = ''
@@ -109,6 +125,7 @@ class PreProcess:
         plt.axis("off")
         plt.savefig("WordCloud.png")
         # plt.show()
+        plt.close()
 
     def save_csvs(self):
         self.all_data.to_csv('text_dataset.csv', index=False)

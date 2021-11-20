@@ -28,7 +28,7 @@ def test_preprocess(test_text_sample):  # todo: change the maxlen parameter!!!!
     tokenizer = load_tokenizer("tokenizer.pickle")
     clean_text = pre_process.clean_text_df
     encoded_text = tokenizer.texts_to_sequences(clean_text)
-    vectorized_text = pad_sequences(encoded_text, maxlen=32, padding='pre')
+    vectorized_text = pad_sequences(encoded_text, maxlen=22, padding='pre')
 
     X_ML = pre_process.X
     X_AdaBoost = pre_process.added_features
