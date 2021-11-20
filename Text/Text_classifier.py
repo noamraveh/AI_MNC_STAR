@@ -243,8 +243,13 @@ def main():
 
     voting_clf.fit(X_train_ML, X_train_AdaBoost, X_train_DL, y_train_ML)
     y_pred = voting_clf.predict_proba_on_test(X_test_ML, X_test_AdaBoost, X_test_DL, y_test_ML)
-    real_y = np.loadtxt('y_test_ML', delimiter=',')
-    voting_clf.create_multi_label_confusion_matrix(real_y=real_y, predicted_y=y_pred)
+    y_pred = np.argmax(y_pred, axis=1)
+    cf_matrix = confusion_matrix(y_test_ML, y_pred)
+    cf_matrix = cf_matrix.astype('float') / cf_matrix.sum(axis=1)[:, np.newaxis]
+
+    labels = ["anger", "disgust", "fear", "happiness", "neutral", "sadness", "surprise"]
+    # create confusion matrix
+    voting_clf.create_multi_label_confusion_matrix(cf_matrix, labels)
     voting_clf.plot_accuracies()
 
     print(f"Voting classifier accuracy on test set: {voting_clf.voting_clf_accuracy_on_test}")

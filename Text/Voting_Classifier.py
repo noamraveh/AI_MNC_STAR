@@ -34,7 +34,6 @@ def get_accuracy(predicted_values, real_y):
                    pred == true_val)
     return num_hits / float(len(real_y))
 
-
 class EnsembleClassifier():
     def __init__(self, ML_models_params, ML_models_acc, DL_models_params, DL_models_acc, vocab_size, vector_size, input_length):
         self.ComplementNB = ComplementNB(**ML_models_params['NB'])
@@ -95,25 +94,34 @@ class EnsembleClassifier():
 
         return y_pred
 
-    def create_multi_label_confusion_matrix(self, real_y, predicted_y):
-        predicted_y = convert_y_values(predicted_y)
-        cm = confusion_matrix(real_y, predicted_y, normalize='true')
-        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-            cm[i][j] = "{:0.2f}".format(cm[i, j])
-        ax = sns.heatmap(cm, annot=True)
-        ax.set_title('Confusion Matrix')
-        ax.set_xlabel('Predicted Emotions')
-        ax.set_ylabel('Actual Emotions')
-        ax.xaxis.set_ticklabels(self.emotions)
-        ax.yaxis.set_ticklabels(self.emotions)
-        plt.show()
+    def create_multi_label_confusion_matrix(self, data, labels):
+        sns.set(color_codes=True)
+        plt.figure(1, figsize=(9, 6))
+
+        plt.title("Final Model - Confusion Matrix")
+
+        sns.set(font_scale=1.4)
+        ax = sns.heatmap(data, annot=True, cbar_kws={'label': 'Scale'})
+
+        ax.set_xticklabels(labels)
+        ax.set_yticklabels(labels)
+
+        ax.set(ylabel="True Label", xlabel="Predicted Label")
+
+        plt.savefig("confusion_matrix.png")
+        #plt.show()
+        plt.close()
 
     def plot_accuracies(self):
         x = ['ComplementNB', 'LinearSVM', 'LogisticRegression', 'AdaBoost', 'LSTM', 'CNN', 'Voting Classifier']
         y = self.base_models_accuracies_on_test
         y.append(self.voting_clf_accuracy_on_test)
+
+        sns.set(color_codes=True)
+        plt.figure(1, figsize=(12, 9))
+        plt.title("Models Accuracies")
         ax = sns.barplot(x=x, y=y)
-        ax.set_ylabel('Accuracies')
-        ax.set_title('Models Accuracies')
+        ax.set(ylabel="Accuracy", xlabel="Model")
         ax.xaxis.set_ticklabels(x)
-        plt.show()
+        plt.savefig("accuracies.png", bbox_inches='tight', dpi=400)
+        #plt.show()

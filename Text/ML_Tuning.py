@@ -60,6 +60,7 @@ class Tune:
         plt.legend()
         #plt.show()
         plt.savefig(f"{classifier}_Accuracy.png")
+        plt.close()
 
     def save_model(self):
         filename = self.get_graph_labels()[0]
@@ -89,3 +90,5 @@ class Tune:
             img = ax.scatter(x_depth, y_num_estimators, z_lr, c=c, cmap='Wistia')
             fig.colorbar(img, pad=0.1, aspect=30)
             plt.savefig(f'AdaBoost_{datatype_}_Accuracy.png')
+            plt.close()
+

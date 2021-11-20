@@ -47,6 +47,7 @@ def plot_3d_graph(acc, datatype, params):
     ax.set_title(f'CNN {datatype} Accuracy')
     # plt.show()
     plt.savefig(f"CNN_{datatype}_Accuracy.png")
+    plt.close()
 
 
 class TuneNetwork:
@@ -117,6 +118,7 @@ class LSTM_model(TuneNetwork):
         plt.legend()
         #plt.show()
         plt.savefig("LSTM_Accuracy.png")
+        plt.close()
 
 
 class CNN_model(TuneNetwork):
