@@ -16,7 +16,7 @@ class Tune:
         self.best_model = None
 
     def tune(self):
-        check_clf = GridSearchCV(estimator=self.clf, param_grid=self.hyperparams_dict, scoring='balanced_accuracy', verbose=True, return_train_score=True)
+        check_clf = GridSearchCV(estimator=self.clf, param_grid=self.hyperparams_dict, verbose=True, return_train_score=True)
         check_clf.fit(self.X_train, self.y_train)
         train_acc = check_clf.cv_results_["mean_train_score"]
         val_acc = check_clf.cv_results_["mean_test_score"]
@@ -27,7 +27,7 @@ class Tune:
                                pd.DataFrame(train_acc, columns=["Train Accuracy"]),
                                pd.DataFrame(val_acc, columns=["Validation Accuracy"])], axis=1)
             table.to_csv("AdaBoost_tuning_results.csv", index=False)
-            self.plot_4d_graph(table)
+            self.plot_3d_graph(table)
         else:
             self.plot_graph(train_acc, val_acc)
         self.val_acc = check_clf.best_score_
@@ -67,28 +67,15 @@ class Tune:
         dump(self.clf, f'{filename}.joblib')
 
     @staticmethod
-    def plot_4d_graph(df):
-        pre_extract = df["base_estimator"].tolist()
-        extracted = [x.max_depth for x in pre_extract]
-        # for sample in pre_extract:
-        #     digit = [c for c in sample if c.isdigit()]
-        #     if len(digit):
-        #         extracted.append(int(digit[0]))
-        df["base_estimator"] = np.array(extracted)
+    def plot_3d_graph(df):
         for datatype_ in ["Train", "Validation"]:
             fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-            x_depth = df['base_estimator'].to_numpy()
-            y_num_estimators = df["n_estimators"].to_numpy()
-            z_lr = df["learning_rate"].to_numpy()
+            x_num_estimators = df["n_estimators"].to_numpy()
+            y_lr = df["learning_rate"].to_numpy()
             c = df[f'{datatype_} Accuracy'].to_numpy()
-            ax.set_xlabel('Max Depth')
-            ax.set_ylabel('Num Estimators')
-            ax.set_zlabel('Learning Rate')
-
-            ax.set_title(f'AdaBoost {datatype_} Accuracy')
-            img = ax.scatter(x_depth, y_num_estimators, z_lr, c=c, cmap='Wistia')
+            plt.xlabel('Num Estimators')
+            plt.ylabel('Learning Rate')
+            plt.title(f'AdaBoost {datatype_} Accuracy')
+            img = plt.scatter(x_num_estimators, y_lr, c=c, cmap='Wistia')
             fig.colorbar(img, pad=0.1, aspect=30)
             plt.savefig(f'AdaBoost_{datatype_}_Accuracy.png')
-            plt.close()
-

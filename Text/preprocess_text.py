@@ -86,9 +86,9 @@ class PreProcess:
         self.added_features['repeated letters'] = self.all_data['Text'].apply(
             lambda x: self.is_repeated_letters(x)).astype('int8')
 
-        # self.added_features['Emotions_list'] = self.all_data['clean text'].apply(self.NRC_lex_scores_per_line)
-        # self.added_features = pd.concat(
-        #     [self.added_features.drop(['Emotions_list'], axis=1), self.added_features['Emotions_list'].apply(pd.Series)], axis=1)
+        self.added_features['Emotions_list'] = self.all_data['clean text'].apply(self.NRC_lex_scores_per_line)
+        self.added_features = pd.concat(
+            [self.added_features.drop(['Emotions_list'], axis=1), self.added_features['Emotions_list'].apply(pd.Series)], axis=1)
 
     def Tfidf(self, is_train=True):
         vectorizer = TfidfVectorizer()

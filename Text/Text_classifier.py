@@ -1,5 +1,4 @@
 import pandas as pd
-from sklearn.ensemble import VotingClassifier
 from sklearn.model_selection import train_test_split
 import numpy as np
 import seaborn as sns
@@ -8,7 +7,6 @@ from sklearn.naive_bayes import ComplementNB
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import AdaBoostClassifier
-from sklearn.tree import DecisionTreeClassifier
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from ML_Tuning import Tune
@@ -19,11 +17,11 @@ from preprocess_text import PreProcess
 from sklearn.preprocessing import LabelBinarizer
 from scipy import sparse
 from joblib import dump
-from sklearn.metrics import balanced_accuracy_score
 from sklearn.utils import shuffle
 from sklearn.calibration import CalibratedClassifierCV
 from Voting_Classifier import EnsembleClassifier
 import pickle
+from sklearn.metrics import confusion_matrix
 
 
 def save_tokenizer_to_file(tokenizer):
@@ -89,7 +87,7 @@ def tokenizer_modifications(df, num_words):
 def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_train_Adaboost):
     print("starts to tune Naive Bayes")
     NB_clf = ComplementNB()
-    NB_hyperparams_dict = {'alpha': np.linspace(0.01, 2, num=50)} # todo: after setting the logspace, check linspace for better scaling
+    NB_hyperparams_dict = {'alpha': np.linspace(0.01, 5, num=50)} # todo: after setting the logspace, check linspace for better scaling
     print("CV Naive Bayes")
     NB_model = Tune(NB_clf, NB_hyperparams_dict, X_train_ML, y_train_ML)
     NB_best_model_params = NB_model.tune()
@@ -98,7 +96,7 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
     print("starts to tune Linear SVM")
     # Linear SVM (SGDclassifier)  # when the loss is "hinge" the SGD is LinearSVM
     SVM_clf = SGDClassifier(class_weight='balanced')
-    SVM_hyperparams_dict = {'alpha': np.logspace(-4, -3, num=50)} # todo: after setting the logspace, check linspace for better scaling
+    SVM_hyperparams_dict = {'alpha': np.logspace(-6, -3, num=100)} # todo: after setting the logspace, check linspace for better scaling
     print("CV SVM")
     SVM_model = Tune(SVM_clf, SVM_hyperparams_dict, X_train_ML, y_train_ML)
     SVM_best_model_params = SVM_model.tune()
@@ -107,7 +105,7 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
     print("starts to tune Logistic Regression")
     # linear regression
     LR = LogisticRegression(max_iter=5000, class_weight='balanced')
-    LR_hyperparams_dict = {'C': np.linspace(0.1, 5, num=50)} # todo: after setting the logspace, check linspace for better scaling
+    LR_hyperparams_dict = {'C': np.logspace(0.01, 20, num=100)} # todo: after setting the logspace, check linspace for better scaling
     print("CV LR")
     LR_model = Tune(LR, LR_hyperparams_dict, X_train_ML, y_train_ML)
     LR_best_model_params = LR_model.tune()
@@ -116,8 +114,7 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
     print("starts to tune Adaboost")
     # Adaboost
     AdaBoost = AdaBoostClassifier()
-    AdaBoost_hyperparams_dict = {'base_estimator': [DecisionTreeClassifier(max_depth=x) for x in [3, 5, 7, 9]],
-                                 'n_estimators': [50, 100, 200, 300, 500],
+    AdaBoost_hyperparams_dict = {'n_estimators': [50, 100, 200, 300, 500],
                                  'learning_rate': [0.1, 0.2, 0.4, 0.6, 0.8, 1]}
     print("CV Adaboost")
     Adaboost_model = Tune(AdaBoost, AdaBoost_hyperparams_dict, X_train_Adaboost, y_train_Adaboost)
@@ -204,18 +201,17 @@ def main():
     note that the 3 y's (ML, Adaboost and DL) are the same - saving all three
      in case we want to use different random state in the train-test split
     """
-    # data = preprocessing_data()
-    # X = data['X']
-    # y = data['y']
-    # added_features_df = data['added_features_df']
-    # clean_text = data['clean_text']
+    data = preprocessing_data()
+    X = data['X']
+    y = data['y']
+    added_features_df = data['added_features_df']
+    clean_text = data['clean_text']
 
     # # todo: if data already exists, comment out the lines above and use the 4 below:
-    y = pd.read_csv("y.csv").values.ravel()
-    added_features_df = pd.read_csv("added_features.csv")
-    clean_text = pd.read_csv("clean_text.csv").astype(str).iloc[:,0]
-    X = sparse.load_npz("X.npz")
-
+    # y = pd.read_csv("y.csv").values.ravel()
+    # added_features_df = pd.read_csv("added_features.csv")
+    # clean_text = pd.read_csv("clean_text.csv").astype(str).iloc[:,0]
+    # X = sparse.load_npz("X.npz")
 
     X_train_ML, X_test_ML, y_train_ML, y_test_ML = train_test_split(X, y, test_size=0.2, random_state=11, shuffle=True)
     sparse.save_npz("X_test_ML.npz", X_test_ML)
