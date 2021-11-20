@@ -36,7 +36,7 @@ def preprocessing_data():
     isear = pd.read_csv('isear.csv')
     tweets = pd.read_csv('tweets.csv', usecols=['Text', 'Emotion'], names=['Tweet', 'Emotion', 'Text']).drop([0])
     all_data = pd.concat([tweets, bert, isear])
-    #all_data = pd.read_csv('data_to_test.csv')
+    # all_data = pd.read_csv('data_to_test.csv')
     all_data = shuffle(all_data, random_state=42)
 
     # convert emotions
@@ -53,17 +53,17 @@ def preprocessing_data():
                      "sadness": 5, "surprise": 6}
 
     # analysis
-    sns.countplot(data=all_data, x="Emotion")
-    plt.show()
-    print("##### ORIGINAL DATA SAMPLE#####")
-    print(tabulate(all_data.sample(n=5), headers='keys', tablefmt='psql'))
+    # sns.countplot(data=all_data, x="Emotion")
+    # plt.show()
+    # print("##### ORIGINAL DATA SAMPLE#####")
+    # print(tabulate(all_data.sample(n=5), headers='keys', tablefmt='psql'))
 
     all_data = all_data.replace(to_replace=emotions_dict)
 
     pre_process = PreProcess(all_data)
     pre_process.pre_process_text()
     pre_process.Tfidf()
-    pre_process.data_visualisation()
+    #pre_process.data_visualisation()
     pre_process.add_features()
     pre_process.save_csvs()
 
@@ -213,7 +213,7 @@ def main():
     # # todo: if data already exists, comment out the lines above and use the 4 below:
     y = pd.read_csv("y.csv").values.ravel()
     added_features_df = pd.read_csv("added_features.csv")
-    clean_text = pd.read_csv("clean_text.csv")
+    clean_text = pd.read_csv("clean_text.csv").astype(str).iloc[:,0]
     X = sparse.load_npz("X.npz")
 
 
@@ -243,7 +243,8 @@ def main():
 
     voting_clf.fit(X_train_ML, X_train_AdaBoost, X_train_DL, y_train_ML)
     y_pred = voting_clf.predict_proba_on_test(X_test_ML, X_test_AdaBoost, X_test_DL, y_test_ML)
-    voting_clf.create_multi_label_confusion_matrix(real_y=y_test_ML, predicted_y=y_pred)
+    real_y = np.loadtxt('y_test_ML', delimiter=',')
+    voting_clf.create_multi_label_confusion_matrix(real_y=real_y, predicted_y=y_pred)
     voting_clf.plot_accuracies()
 
     print(f"Voting classifier accuracy on test set: {voting_clf.voting_clf_accuracy_on_test}")

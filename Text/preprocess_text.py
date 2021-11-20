@@ -26,15 +26,27 @@ class PreProcess:
         words = sentence.split()
         return sum(len(word) for word in words) / len(words)
 
+    # @staticmethod
+    # def remove_three_letters_words(sentence):
+    #     words = sentence.split()
+    #     alphabet_lowercase = list(string.ascii_lowercase)
+    #     for index in range(26):
+    #         for word in words:
+    #             if alphabet_lowercase[index] * 3 in word:
+    #                 words.remove(word)
+    #     return ' '.join(word for word in words)
+
     @staticmethod
-    def remove_three_letters_words(sentence):
+    def is_repeated_letters(sentence):
+        is_repeated = 0
         words = sentence.split()
         alphabet_lowercase = list(string.ascii_lowercase)
         for index in range(26):
             for word in words:
                 if alphabet_lowercase[index] * 3 in word:
-                    words.remove(word)
-        return ' '.join(word for word in words)
+                    is_repeated = 1
+                    break
+        return is_repeated
 
     def NRC_lex_scores_per_line(self, line):
         emotions_scores_dict = {"Angry": 0, "Disgust": 0, "Fear": 0, "Happy": 0, "Sad": 0, "Surprise": 0}
@@ -71,10 +83,12 @@ class PreProcess:
             lambda x: len([x for x in x.split() if x in STOPWORDS])).astype('int8')
         self.added_features['upper'] = self.all_data['Text'].apply(
             lambda x: len([x for x in x.split() if x.isupper()])).astype('int32')
+        self.added_features['repeated letters'] = self.all_data['Text'].apply(
+            lambda x: self.is_repeated_letters(x)).astype('int8')
 
-        self.added_features['Emotions_list'] = self.all_data['clean text'].apply(self.NRC_lex_scores_per_line)
-        self.added_features = pd.concat(
-            [self.added_features.drop(['Emotions_list'], axis=1), self.added_features['Emotions_list'].apply(pd.Series)], axis=1)
+        # self.added_features['Emotions_list'] = self.all_data['clean text'].apply(self.NRC_lex_scores_per_line)
+        # self.added_features = pd.concat(
+        #     [self.added_features.drop(['Emotions_list'], axis=1), self.added_features['Emotions_list'].apply(pd.Series)], axis=1)
 
     def Tfidf(self, is_train=True):
         vectorizer = TfidfVectorizer()
