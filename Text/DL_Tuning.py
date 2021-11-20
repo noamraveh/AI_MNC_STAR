@@ -84,7 +84,7 @@ class TuneNetwork:
         epochs = 10
         callback = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=3)
         model = KerasClassifier(build_fn=self.build_network)
-        check_model = GridSearchCV(estimator=model, param_grid=self.params, cv=5, verbose=1, scoring='accuracy', return_train_score=True)
+        check_model = GridSearchCV(estimator=model, param_grid=self.params, cv=5, verbose=1, return_train_score=True)
         check_model = check_model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, callbacks=[callback], validation_split=0.2)
         train_acc = check_model.cv_results_["mean_train_score"]
         val_acc = check_model.cv_results_["mean_test_score"]
