@@ -79,3 +79,4 @@ class Tune:
             img = plt.scatter(x_num_estimators, y_lr, c=c, cmap='Wistia')
             fig.colorbar(img, pad=0.1, aspect=30)
             plt.savefig(f'AdaBoost_{datatype_}_Accuracy.png')
+            plt.close()
