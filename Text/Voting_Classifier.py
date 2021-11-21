@@ -125,3 +125,4 @@ class EnsembleClassifier():
         ax.xaxis.set_ticklabels(x)
         plt.savefig("accuracies.png", bbox_inches='tight', dpi=400)
         #plt.show()
+        plt.close()

@@ -30,23 +30,39 @@ def clean_text_based_on_vocab(df, vocabulary):
     return text
 
 
-def plot_3d_graph(acc, datatype, params):
+# def plot_3d_graph(acc, datatype, params):
+#     x_filters = params["filters"]
+#     x_filters = np.array(x_filters)
+#     y_units = params["units"]
+#     y_units = np.array(y_units)
+#     x, y = np.meshgrid(x_filters, y_units)
+#     z = acc
+#     fig = plt.figure()
+#     ax = fig.add_subplot(111, projection='3d')
+#     pnt3d = ax.scatter(x, y, z, c=z)
+#     plt.colorbar(pnt3d)
+#     ax.set_xlabel('Filters')
+#     ax.set_ylabel('Units')
+#     ax.set_zlabel(f'{datatype} Accuracy')
+#     ax.set_title(f'CNN {datatype} Accuracy')
+#     # plt.show()
+#     plt.savefig(f"CNN_{datatype}_Accuracy.png")
+#     plt.close()
+
+def plot_3d_graph(acc, datatype_, params):
+    fig = plt.figure()
     x_filters = params["filters"]
     x_filters = np.array(x_filters)
     y_units = params["units"]
     y_units = np.array(y_units)
     x, y = np.meshgrid(x_filters, y_units)
-    z = acc
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    pnt3d = ax.scatter(x, y, z, c=z)
-    plt.colorbar(pnt3d)
-    ax.set_xlabel('Filters')
-    ax.set_ylabel('Units')
-    ax.set_zlabel(f'{datatype} Accuracy')
-    ax.set_title(f'CNN {datatype} Accuracy')
-    # plt.show()
-    plt.savefig(f"CNN_{datatype}_Accuracy.png")
+    c = np.array(acc)
+    plt.xlabel('Filters')
+    plt.ylabel('Units')
+    plt.title(f'CNN {datatype_} Accuracy')
+    img = plt.scatter(x, y, c=c, cmap='Wistia')
+    fig.colorbar(img, pad=0.1, aspect=30)
+    plt.savefig(f"CNN_{datatype_}_Accuracy.png")
     plt.close()
 
 
