@@ -5,6 +5,7 @@ from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.model_selection import GridSearchCV
 import numpy as np
 import tensorflow as tf
+import pandas as pd
 
 
 def load_vocab(vocab_filename):
@@ -29,41 +30,21 @@ def clean_text_based_on_vocab(df, vocabulary):
         text.append(tokens)
     return text
 
-
-# def plot_3d_graph(acc, datatype, params):
+# def plot_3d_graph(acc, datatype_, params):
+#     fig = plt.figure()
 #     x_filters = params["filters"]
 #     x_filters = np.array(x_filters)
 #     y_units = params["units"]
 #     y_units = np.array(y_units)
 #     x, y = np.meshgrid(x_filters, y_units)
-#     z = acc
-#     fig = plt.figure()
-#     ax = fig.add_subplot(111, projection='3d')
-#     pnt3d = ax.scatter(x, y, z, c=z)
-#     plt.colorbar(pnt3d)
-#     ax.set_xlabel('Filters')
-#     ax.set_ylabel('Units')
-#     ax.set_zlabel(f'{datatype} Accuracy')
-#     ax.set_title(f'CNN {datatype} Accuracy')
-#     # plt.show()
-#     plt.savefig(f"CNN_{datatype}_Accuracy.png")
+#     c = np.array(acc)
+#     plt.xlabel('Filters')
+#     plt.ylabel('Units')
+#     plt.title(f'CNN {datatype_} Accuracy')
+#     img = plt.scatter(x, y, c=c, cmap='Wistia')
+#     fig.colorbar(img, pad=0.1, aspect=30)
+#     plt.savefig(f"CNN_{datatype_}_Accuracy.png")
 #     plt.close()
-
-def plot_3d_graph(acc, datatype_, params):
-    fig = plt.figure()
-    x_filters = params["filters"]
-    x_filters = np.array(x_filters)
-    y_units = params["units"]
-    y_units = np.array(y_units)
-    x, y = np.meshgrid(x_filters, y_units)
-    c = np.array(acc)
-    plt.xlabel('Filters')
-    plt.ylabel('Units')
-    plt.title(f'CNN {datatype_} Accuracy')
-    img = plt.scatter(x, y, c=c, cmap='Wistia')
-    fig.colorbar(img, pad=0.1, aspect=30)
-    plt.savefig(f"CNN_{datatype_}_Accuracy.png")
-    plt.close()
 
 
 class TuneNetwork:
@@ -93,7 +74,7 @@ class TuneNetwork:
     def save_model(self):
         self.best_model.save(f'{self.__class__.__name__}.h5')
 
-    def plot_graph(self, train_acc, val_acc):
+    def plot_graph(self, train_acc=None, val_acc=None, df=None):
         pass
 
     def tune(self, X_train, y_train):
@@ -110,7 +91,14 @@ class TuneNetwork:
         print(f'{self.__class__.__name__.replace("_model", "")} Validation Accuracy: { self.val_acc}')
         print(f'{self.__class__.__name__.replace("_model", "")} Best Parameters: {self.best_params}')
         self.best_model = check_model.best_estimator_.model
-        self.plot_graph(train_acc, val_acc)
+        if self.__class__.__name__ == 'CNN_model':
+            table = pd.concat([pd.DataFrame(check_model.cv_results_["params"]),
+                               pd.DataFrame(train_acc, columns=["Train Accuracy"]),
+                               pd.DataFrame(val_acc, columns=["Validation Accuracy"])], axis=1)
+            table.to_csv("CNN_tuning_results.csv", index=False)
+            self.plot_graph(df=table)
+        else:
+            self.plot_graph(train_acc=train_acc, val_acc=val_acc)
 
 
 class LSTM_model(TuneNetwork):
@@ -123,7 +111,7 @@ class LSTM_model(TuneNetwork):
         self.model = self.build_model(inner_layers)
         return self.model
 
-    def plot_graph(self, train_acc, val_acc):
+    def plot_graph(self, train_acc=None, val_acc=None, df=None):
         units = self.params["units"]
         plt.figure()
         plt.title(f'{self.__class__.__name__.replace("_model", "")} Classifier Accuracy')
@@ -150,7 +138,18 @@ class CNN_model(TuneNetwork):
         self.model = self.build_model(inner_layers)
         return self.model
 
-    def plot_graph(self, train_acc, val_acc):
-        plot_3d_graph(train_acc, "Train", self.params)
-        plot_3d_graph(val_acc, "Validation", self.params)
+    def plot_graph(self, train_acc=None, val_acc=None, df=None):
+        for datatype_ in ["Train", "Validation"]:
+            plt.figure()
+            plt.title(f'CNN {datatype_} Accuracy')
+            plt.xlabel("Filters")
+            plt.ylabel(f"{datatype_} Accuracy")
+            for value in self.params["units"]:
+                df1 = df[df['units'] == value]
+                x_lr = df1["filters"].to_numpy()
+                y_acc = df1[f"{datatype_} Accuracy"].to_numpy()
+                plt.plot(x_lr, y_acc)
+            plt.legend(self.params["units"], title="Units")
+            plt.savefig(f'CNN_{datatype_}_Accuracy.png')
+            plt.close()
 

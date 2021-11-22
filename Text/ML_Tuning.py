@@ -27,7 +27,7 @@ class Tune:
                                pd.DataFrame(train_acc, columns=["Train Accuracy"]),
                                pd.DataFrame(val_acc, columns=["Validation Accuracy"])], axis=1)
             table.to_csv("AdaBoost_tuning_results.csv", index=False)
-            self.plot_3d_graph(table)
+            self.plot_adaboost_graph(table)
         else:
             self.plot_graph(train_acc, val_acc)
         self.val_acc = check_clf.best_score_
@@ -66,17 +66,17 @@ class Tune:
         filename = self.get_graph_labels()[0]
         dump(self.clf, f'{filename}.joblib')
 
-    @staticmethod
-    def plot_3d_graph(df):
+    def plot_adaboost_graph(self, df):
         for datatype_ in ["Train", "Validation"]:
-            fig = plt.figure()
-            x_num_estimators = df["n_estimators"].to_numpy()
-            y_lr = df["learning_rate"].to_numpy()
-            c = df[f'{datatype_} Accuracy'].to_numpy()
-            plt.xlabel('Num Estimators')
-            plt.ylabel('Learning Rate')
+            plt.figure()
             plt.title(f'AdaBoost {datatype_} Accuracy')
-            img = plt.scatter(x_num_estimators, y_lr, c=c, cmap='Wistia')
-            fig.colorbar(img, pad=0.1, aspect=30)
+            plt.xlabel("Learning Rate")
+            plt.ylabel(f"{datatype_} Accuracy")
+            for value in self.hyperparams_dict["n_estimators"]:
+                df1 = df[df['n_estimators'] == value]
+                x_lr = df1["learning_rate"].to_numpy()
+                y_acc = df1[f"{datatype_} Accuracy"].to_numpy()
+                plt.plot(x_lr, y_acc)
+            plt.legend(self.hyperparams_dict["n_estimators"], title="Num Estimators")
             plt.savefig(f'AdaBoost_{datatype_}_Accuracy.png')
             plt.close()
