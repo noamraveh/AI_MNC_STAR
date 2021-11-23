@@ -115,7 +115,7 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
     # Adaboost
     AdaBoost = AdaBoostClassifier()
     AdaBoost_hyperparams_dict = {'n_estimators': [50, 100, 200, 300, 500],
-                                 'learning_rate': [0.1, 0.2, 0.4, 0.6, 0.8, 1]}
+                                 'learning_rate': [0.0001, 0.001, 0.01, 0.1, 1]}
     print("CV Adaboost")
     Adaboost_model = Tune(AdaBoost, AdaBoost_hyperparams_dict, X_train_Adaboost, y_train_Adaboost)
     Adaboost_best_model_params = Adaboost_model.tune()
