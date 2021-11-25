@@ -112,8 +112,28 @@ class EnsembleClassifier():
         #plt.show()
         plt.close()
 
+    def calc_acc_on_val(self, X_val_ML, X_val_AdaBoost, X_val_DL, y_val):
+        predictions_ = []
+        for classifier in self.ML_classifiers:
+            predict = classifier.predict_proba(X_val_ML)
+            predictions_.append(predict)
+
+        predict = self.AdaBoost.predict_proba(X_val_AdaBoost)
+        predictions_.append(predict)
+
+        predict = self.LSTM.predict_proba(X_val_DL)
+        predictions_.append(predict)
+
+        predict = self.CNN.predict_proba(X_val_DL)
+        predictions_.append(predict)
+
+        y_pred = np.average(predictions_, axis=0, weights=self.weights)
+        acc = get_accuracy(y_pred, y_val)
+        return acc
+
     def plot_accuracies(self):
         x = ['ComplementNB', 'LinearSVM', 'LogisticRegression', 'AdaBoost', 'LSTM', 'CNN', 'Voting Classifier']
+
         y = self.base_models_accuracies_on_test
         y.append(self.voting_clf_accuracy_on_test)
 
