@@ -22,20 +22,29 @@ from sklearn.calibration import CalibratedClassifierCV
 from Voting_Classifier import EnsembleClassifier
 import pickle
 from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
 
 
 def save_tokenizer_to_file(tokenizer):
+    """
+    Save the given tokenizer to a pickle file.
+    :param tokenizer: trained tokenizer.
+    """
     with open('tokenizer.pickle', 'wb') as handle:
         pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def preprocessing_data():
-    bert = pd.read_csv('bert.csv')
-    isear = pd.read_csv('isear.csv')
-    tweets = pd.read_csv('tweets.csv', usecols=['Text', 'Emotion'], names=['Tweet', 'Emotion', 'Text']).drop([0])
+    """
+    Merge the three datasets together into one large dataset.
+    Convert emotions and encode them.
+    Use the PreProcess class for the preprocessing section.
+    :return: dictionary where the keys are the type of the data and the values are the dataframes/csr_matrix.
+    """
+    bert = pd.read_csv('../Data/original_data/bert.csv')
+    isear = pd.read_csv('../Data/original_data/isear.csv')
+    tweets = pd.read_csv('../Data/original_data/tweets.csv', usecols=['Text', 'Emotion'], names=['Tweet', 'Emotion', 'Text']).drop([0])
     all_data = pd.concat([tweets, bert, isear])
-    # all_data = pd.read_csv('data_to_test.csv')
     all_data = shuffle(all_data, random_state=42)
 
     # convert emotions
@@ -62,7 +71,7 @@ def preprocessing_data():
     pre_process = PreProcess(all_data)
     pre_process.pre_process_text()
     pre_process.Tfidf()
-    # pre_process.data_visualisation()
+    pre_process.data_visualisation()
     pre_process.add_features()
     pre_process.save_csvs()
 
@@ -75,6 +84,12 @@ def preprocessing_data():
 
 
 def tokenizer_modifications(df, num_words):
+    """
+    Perform tokenization on the clean sentences.
+    :param df: dataframe of clean text
+    :param num_words: the maximum number of words for the tokenizer to keep
+    :return: max length of a sentence in the dataframe and the tokenizied sentences in a dataframe form.
+    """
     text = df.values.tolist()
     tokenizer = Tokenizer(num_words=num_words)
     tokenizer.fit_on_texts(text)
@@ -86,6 +101,16 @@ def tokenizer_modifications(df, num_words):
 
 
 def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_train_Adaboost):
+    """
+    Tune each of the following models: Complement Naive Bayes, LinearSVM, Logistic Regression and AdaBoost.
+    :param X_train_ML: X values of ML train dataset
+    :param y_train_ML: y values of ML train dataset
+    :param X_train_Adaboost: X values of AdaBoost train dataset
+    :param y_train_Adaboost: y values of AdaBoost train dataset
+    :return: 3 dictionaries: 1) keys: models' names | values: best models.
+                             2) keys: models' names | values: best hyperparameters for the model.
+                             3) keys: models' names | values: best average accuracy of the model.
+    """
     print("starts to tune Naive Bayes")
     NB_clf = ComplementNB()
     NB_hyperparams_dict = {
@@ -131,6 +156,16 @@ def tune_machine_learning_models(X_train_ML, y_train_ML, X_train_Adaboost, y_tra
 
 
 def tune_deep_learning_models(vocab_size, max_length, X_train, y_train):
+    """
+    Tune each of the following models: LSTM and CNN neutral networks.
+    :param vocab_size: size of vocabulary (10,000) for the embedded layer.
+    :param max_length: length of the longest cleaned sentence in the dataset.
+    :param X_train: X values of DL train dataset
+    :param y_train: y values of DL train dataset
+    :return:  3 dictionaries: 1) keys: models' names | values: best models.
+                             2) keys: models' names | values: best hyperparameters for the model.
+                             3) keys: models' names | values: best average accuracy of the model.
+    """
     print("starts to tune LSTM")
     LSTM = LSTM_model(vocab_size, 100, max_length)
     LSTM.tune(X_train, y_train)
@@ -146,21 +181,19 @@ def tune_deep_learning_models(vocab_size, max_length, X_train, y_train):
 
 
 def main():
-    """
-    note that the 3 y's (ML, Adaboost and DL) are the same - saving all three
-     in case we want to use different random state in the train-test split
-    """
     data = preprocessing_data()
     X = data['X']
     y = data['y']
     added_features_df = data['added_features_df']
     clean_text = data['clean_text']
 
-    # # todo: if data already exists, comment out the lines above and use the 4 below:
-    # y = pd.read_csv("y.csv").values.ravel()
-    # added_features_df = pd.read_csv("added_features.csv")
-    # clean_text = pd.read_csv("clean_text.csv").astype(str).iloc[:,0]
-    # X = sparse.load_npz("X.npz")
+    """
+    if data already exists, comment out the lines above and use the 4 below:
+    """
+    # y = pd.read_csv("../Data/processed_data/y.csv").values.ravel()
+    # added_features_df = pd.read_csv("../Data/processed_data/added_features.csv")
+    # clean_text = pd.read_csv("../Data/processed_data/clean_text.csv").astype(str).iloc[:,0]
+    # X = sparse.load_npz("../Data/processed_data/X.npz")
 
     X_train_ML, X_test_ML, y_train_ML, y_test_ML = train_test_split(X, y, test_size=0.2, random_state=11, shuffle=True)
     sparse.save_npz("X_test_ML.npz", X_test_ML)
@@ -170,6 +203,8 @@ def main():
                                                                                             test_size=0.2,
                                                                                             random_state=11,
                                                                                             shuffle=True)
+    X_train_AdaBoost.reset_index(drop=True, inplace=True)
+    X_test_AdaBoost.reset_index(drop=True, inplace=True)
     np.savetxt("X_test_AdaBoost", X_test_AdaBoost, delimiter=',')
     np.savetxt("y_test_AdaBoost", y_test_AdaBoost, delimiter=',')
 
@@ -190,24 +225,25 @@ def main():
     best_DL_models, DL_models_params, DL_accuracies = tune_deep_learning_models(vocab_size, max_length, X_train_DL,
                                                                                 y_train_DL)
 
-    # todo: this section is used just for average validation accuracy of the voting_clf - comment out this section afterwards
-    voting_clf = EnsembleClassifier(ML_models_params, ML_accuracies, DL_models_params, DL_accuracies, vocab_size, 100, max_length)
-    kfold = KFold(n_splits=5, random_state=11, shuffle=True)
-    sum_acc = 0
-    for train_group_idx, val_group_idx in kfold.split(X_train_ML):
-        X_train_ML_voting = X_train_ML[train_group_idx]
-        X_train_AdaBoost_voting = X_train_AdaBoost[train_group_idx]
-        X_train_DL_voting = X_train_DL[train_group_idx]
-        X_val_ML_voting = X_train_ML[val_group_idx]
-        X_val_AdaBoost_voting = X_train_AdaBoost[val_group_idx]
-        X_val_DL_voting = X_train_DL[val_group_idx]
-        y_train_voting = y_train_ML[train_group_idx]
-        y_val_voting = y_train_ML[val_group_idx]
-        voting_clf.fit(X_train_ML_voting, X_train_AdaBoost_voting, X_train_DL_voting, y_train_voting)
-        cur_accuracy = voting_clf.calc_acc_on_val(X_val_ML_voting, X_val_AdaBoost_voting, X_val_DL_voting, y_val_voting)
-        sum_acc += cur_accuracy
-    avg_acc = sum_acc / float(5)
-    print(f"Voting classifier average accuracy on validation set: {avg_acc}")
+    # the section below is used just for printing the average validation accuracy of the voting_clf - comment out this section afterwards
+
+    # voting_clf = EnsembleClassifier(ML_models_params, ML_accuracies, DL_models_params, DL_accuracies, vocab_size, 100, max_length)
+    # kfold = StratifiedKFold(n_splits=5, random_state=11, shuffle=True)
+    # sum_acc = 0
+    # for train_group_idx, val_group_idx in kfold.split(X=X_train_ML, y=y_train_ML):
+    #     X_train_ML_voting = X_train_ML[train_group_idx]
+    #     X_train_AdaBoost_voting = X_train_AdaBoost.iloc[train_group_idx]
+    #     X_train_DL_voting = X_train_DL[train_group_idx]
+    #     X_val_ML_voting = X_train_ML[val_group_idx]
+    #     X_val_AdaBoost_voting = X_train_AdaBoost.iloc[val_group_idx]
+    #     X_val_DL_voting = X_train_DL[val_group_idx]
+    #     y_train_voting = y_train_ML[train_group_idx]
+    #     y_val_voting = y_train_ML[val_group_idx]
+    #     voting_clf.fit(X_train_ML_voting, X_train_AdaBoost_voting, X_train_DL_voting, y_train_voting)
+    #     cur_accuracy = voting_clf.calc_acc_on_val(X_val_ML_voting, X_val_AdaBoost_voting, X_val_DL_voting, y_val_voting)
+    #     sum_acc += cur_accuracy
+    # avg_acc = sum_acc / float(5)
+    # print(f"Voting classifier average accuracy on validation set: {avg_acc}")
 
 
     # FINAL VOTING CLASSIFIER

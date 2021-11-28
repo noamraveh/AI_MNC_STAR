@@ -8,45 +8,6 @@ import tensorflow as tf
 import pandas as pd
 
 
-def load_vocab(vocab_filename):
-    file = open(vocab_filename, 'r')
-    text = file.read()
-    file.close()
-    vocabulary = text.split()
-    return set(vocabulary)
-
-
-def load_dataset():
-    pass
-
-
-def clean_text_based_on_vocab(df, vocabulary):
-    clean_data = df['clean text'].tolist()
-    text = []
-    for sample in clean_data:
-        words = sample.split()
-        tokens = [w for w in words if w in vocabulary]
-        tokens = ' '.join(tokens)
-        text.append(tokens)
-    return text
-
-# def plot_3d_graph(acc, datatype_, params):
-#     fig = plt.figure()
-#     x_filters = params["filters"]
-#     x_filters = np.array(x_filters)
-#     y_units = params["units"]
-#     y_units = np.array(y_units)
-#     x, y = np.meshgrid(x_filters, y_units)
-#     c = np.array(acc)
-#     plt.xlabel('Filters')
-#     plt.ylabel('Units')
-#     plt.title(f'CNN {datatype_} Accuracy')
-#     img = plt.scatter(x, y, c=c, cmap='Wistia')
-#     fig.colorbar(img, pad=0.1, aspect=30)
-#     plt.savefig(f"CNN_{datatype_}_Accuracy.png")
-#     plt.close()
-
-
 class TuneNetwork:
     def __init__(self, vocab_size, vector_size, input_length):
         self.vocab_size = vocab_size
@@ -59,6 +20,11 @@ class TuneNetwork:
         self.best_params = None
 
     def build_model(self, inner_layers):
+        """
+        Build and compile the model given the inner layers as a list.
+        :param inner_layers: the inner layers of the model.
+        :return: compiled Sequential model.
+        """
         all_layers = []
         embedded_layer = Embedding(self.vocab_size, self.vector_size, input_length=self.input_length)
         all_layers.append(embedded_layer)
@@ -72,12 +38,21 @@ class TuneNetwork:
         pass
 
     def save_model(self):
+        """
+        Save the model to an .h5 file.
+        """
         self.best_model.save(f'{self.__class__.__name__}.h5')
 
     def plot_graph(self, train_acc=None, val_acc=None, df=None):
         pass
 
     def tune(self, X_train, y_train):
+        """
+        Perform GridSearchCV in order to find the best hyperparmaters for the network.
+        Print accuracies and plot graphs of the model accuracies.
+        :param X_train: the tokenized clean text.
+        :param y_train: the labels.
+        """
         batch_size = 256
         epochs = 10
         callback = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=3)
@@ -102,16 +77,31 @@ class TuneNetwork:
 
 
 class LSTM_model(TuneNetwork):
+    """
+    Derives from TuneNetwork class.
+    """
     def __init__(self, vocab_size, vector_size, input_length):
         super(LSTM_model, self).__init__(vocab_size=vocab_size, vector_size=vector_size, input_length=input_length)
         self.params = {"units": [32, 64, 128, 256]}
 
     def build_network(self, units, filters=None):
+        """
+        Set the inner layers of the model according to the units.
+        :param units: number of units for the LSTM layer.
+        :param filters: Not in use in LSTM.
+        :return: the compiled model with the specified inner layers.
+        """
         inner_layers = [Bidirectional(LSTM(units=units, dropout=0.25, recurrent_dropout=0.25))]
         self.model = self.build_model(inner_layers)
         return self.model
 
     def plot_graph(self, train_acc=None, val_acc=None, df=None):
+        """
+        Plot the train and validation accuracy of the different generated LSTM models.
+        :param train_acc: list of the resulted train accuracies from the GridSearchCV.
+        :param val_acc: list of the resulted train accuracies from the GridSearchCV.
+        :param df: not in use.
+        """
         units = self.params["units"]
         plt.figure()
         plt.title(f'{self.__class__.__name__.replace("_model", "")} Classifier Accuracy')
@@ -131,6 +121,12 @@ class CNN_model(TuneNetwork):
         self.params = {'filters': [32, 64, 128, 256], "units": [32, 64, 128, 256]}
 
     def build_network(self, units, filters=None):
+        """
+        Set the inner layers of the model according to the units and filters.
+        :param units: number of units for the dense layer.
+        :param filters: number of filters for the convolution layer.
+        :return: the compiled model with the specified inner layers.
+        """
         inner_layers = [Conv1D(filters=filters, kernel_size=3, activation='relu'),
                         MaxPooling1D(pool_size=2),
                         Flatten(),
@@ -139,6 +135,12 @@ class CNN_model(TuneNetwork):
         return self.model
 
     def plot_graph(self, train_acc=None, val_acc=None, df=None):
+        """
+        Plot the train and validation accuracy of the different generated CNN models.
+        :param train_acc: not in use.
+        :param val_acc: not in use.
+        :param df: dataframe containing all the different hyperparameters and the resulted accuracies from the GridSearchCV.
+        """
         for datatype_ in ["Train", "Validation"]:
             plt.figure()
             plt.title(f'CNN {datatype_} Accuracy')

@@ -12,6 +12,9 @@ import pickle
 
 
 class PreProcess:
+    """
+    Class for performing the preprocessing of the dataset.
+    """
     def __init__(self, data):
         self.all_data = data
         self.NRC_lex = pd.read_csv('NRC_Emotion_Lexicon.csv')[
@@ -24,21 +27,19 @@ class PreProcess:
 
     @staticmethod
     def avg_word(sentence):
+        """
+        :param sentence: string
+        :return: the average length of the words in the sentence
+        """
         words = sentence.split()
         return sum(len(word) for word in words) / len(words)
 
-    # @staticmethod
-    # def remove_three_letters_words(sentence):
-    #     words = sentence.split()
-    #     alphabet_lowercase = list(string.ascii_lowercase)
-    #     for index in range(26):
-    #         for word in words:
-    #             if alphabet_lowercase[index] * 3 in word:
-    #                 words.remove(word)
-    #     return ' '.join(word for word in words)
-
     @staticmethod
     def is_repeated_letters(sentence):
+        """
+        :param sentence: string
+        :return: 0 if none of the words in the sentence have more than 2 repeated letters. 1- otherwise.
+        """
         is_repeated = 0
         words = sentence.split()
         alphabet_lowercase = list(string.ascii_lowercase)
@@ -51,16 +52,29 @@ class PreProcess:
 
     @staticmethod
     def save_vectorizer_to_file(vectorizer):
+        """
+        Given a vectorizer, save it to a pickle file for future use.
+        :param vectorizer: the vectorizer
+        """
         with open('vectorizer.pickle', 'wb') as handle:
             pickle.dump(vectorizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     @staticmethod
     def load_vectorizer(filename):
+        """
+        Given a path to a pickle file saving vectorizer, load the vectorizer from the file.
+        :param filename: path to the saved vectorizer file in pickle format.
+        """
         with open(filename, 'rb') as handle:
             vectorizer = pickle.load(handle)
         return vectorizer
 
     def NRC_lex_scores_per_line(self, line):
+        """
+        calculates the nrclex score using the NRC_lex library.
+        :param line: sentence.
+        :return: dictionary of the score of each emotion in the sentence.
+        """
         emotions_scores_dict = {"Angry": 0, "Disgust": 0, "Fear": 0, "Happy": 0, "Sad": 0, "Surprise": 0}
         line = line.split()
         for word in line:
@@ -73,11 +87,13 @@ class PreProcess:
         return emotions_scores_dict_new
 
     def pre_process_text(self):
+        """
+        Performs cleaning of the text in order for it to be ready to be vectorized and tokenized.
+        """
         self.all_data['clean text'] = self.all_data['Text'].str.lower()
         self.all_data['clean text'] = self.all_data['clean text'].apply(nfx.remove_userhandles)
         self.all_data['clean text'] = self.all_data['clean text'].apply(nfx.remove_stopwords).apply(
             nfx.remove_punctuations).apply(nfx.remove_special_characters).apply(nfx.remove_numbers)
-        # self.all_data['clean text'] = self.all_data['clean text'].apply(self.remove_three_letters_words)
         st = PorterStemmer()
         self.all_data['clean text'] = self.all_data['clean text'].apply(
             lambda x: " ".join([st.stem(word) for word in x.split()]))
@@ -87,6 +103,9 @@ class PreProcess:
         self.clean_text_df.reset_index(drop=True, inplace=True)
 
     def add_features(self):
+        """
+        Add more features to the dataframe - Used for the AdaBoost features.
+        """
         self.added_features['num ex mark'] = self.all_data['Text'].map(lambda x: x.count("!")).astype('int8')
         self.added_features['num words'] = self.all_data['Text'].apply(lambda x: len(str(x).split(" "))).astype('int32')
         self.added_features['num chars'] = self.all_data['Text'].apply(len).astype('int64')
@@ -103,6 +122,11 @@ class PreProcess:
              [self.added_features.drop(['Emotions_list'], axis=1), self.added_features['Emotions_list'].apply(pd.Series)], axis=1)
 
     def Tfidf(self, is_train=True):
+        """
+        If: is_train=True --> Creates TFIDF vectorizier and fit it on the cleaned train sentences.
+        Else: load a saved TDIDF vectorizer and transforms the cleaned test sentences.
+        :param is_train: Boolean value whether the function is used on train set or test set.
+        """
         vectorizer = TfidfVectorizer()
         if is_train:
             self.X = vectorizer.fit_transform(self.all_data['clean text'])
@@ -114,6 +138,9 @@ class PreProcess:
             self.X = vectorizer.transform(self.all_data['clean text'])
 
     def data_visualisation(self):
+        """
+        Create wordcloud of the train set words and plot it.
+        """
         words = ''
         for i in self.all_data['clean text'].values:
             words += '{} '.format(i.lower())
@@ -128,9 +155,12 @@ class PreProcess:
         plt.close()
 
     def save_csvs(self):
-        self.all_data.to_csv('text_dataset.csv', index=False)
-        sparse.save_npz("X.npz", self.X)
-        self.y.to_csv("y.csv", index=False)
-        self.added_features.to_csv('added_features.csv', index=False)
-        self.clean_text_df.to_csv("clean_text.csv", index=False)
+        """
+        Save the cleaned and generated data to files for future use.
+        """
+        self.all_data.to_csv('../Data/processed_data/text_dataset.csv', index=False)
+        sparse.save_npz("../Data/processed_data/X.npz", self.X)
+        self.y.to_csv("../Data/processed_data/y.csv", index=False)
+        self.added_features.to_csv('../Data/processed_data/added_features.csv', index=False)
+        self.clean_text_df.to_csv("../Data/processed_data/clean_text.csv", index=False)
 

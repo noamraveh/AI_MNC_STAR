@@ -7,6 +7,9 @@ from tabulate import tabulate
 
 
 class Tune:
+    """
+    Class for performing all the hyperparameters tuning of the ML models.
+    """
     def __init__(self, clf, hyperparams_dict, X_train, y_train):
         self.clf = clf
         self.hyperparams_dict = hyperparams_dict
@@ -16,6 +19,11 @@ class Tune:
         self.best_model = None
 
     def tune(self):
+        """
+        Perform GridSearchCV in order to find the best hyperparmaters for the model.
+        Print accuracies and plot graphs of the model accuracies.
+        :return: the hyperparameters of the best model.
+        """
         check_clf = GridSearchCV(estimator=self.clf, param_grid=self.hyperparams_dict, verbose=True, return_train_score=True)
         check_clf.fit(self.X_train, self.y_train)
         train_acc = check_clf.cv_results_["mean_train_score"]
@@ -35,6 +43,9 @@ class Tune:
         return check_clf.best_params_
 
     def get_graph_labels(self):
+        """
+        :return: the type of the model and its hyperparameter.
+        """
         my_class = self.clf.__class__.__name__
         if my_class == 'ComplementNB':
             return 'ComplementNB', 'Alpha'
@@ -46,6 +57,11 @@ class Tune:
             return 'AdaBoostClassifier', ''
 
     def plot_graph(self, train_acc, val_acc):
+        """
+        Plot the train and validation accuracy of the different generated AdaBoost models.
+        :param train_acc: list of the resulted train accuracies from the GridSearchCV.
+        :param val_acc: list of the resulted validation accuracies from the GridSearchCV.
+        """
         classifier, xlabel = self.get_graph_labels()
         params = []
         for key, value in self.hyperparams_dict.items():
@@ -67,6 +83,10 @@ class Tune:
         dump(self.clf, f'{filename}.joblib')
 
     def plot_adaboost_graph(self, df):
+        """
+        Plot the train and validation accuracy of the different generated AdaBoost models.
+        :param df: dataframe containing all the different hyperparameters and the resulted accuracies from the GridSearchCV.
+        """
         for datatype_ in ["Train", "Validation"]:
             plt.figure()
             plt.title(f'AdaBoost {datatype_} Accuracy')
